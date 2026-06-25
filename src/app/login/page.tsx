@@ -4,6 +4,22 @@ import React, { useState } from 'react';
 import { Shield, Mail, Lock, Heart, LayoutGrid } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
+const cleanErrorMessage = (message: string): string => {
+  if (message && message.includes('SMTP Error:')) {
+    try {
+      const jsonStart = message.indexOf('{');
+      if (jsonStart !== -1) {
+        const jsonPart = message.substring(jsonStart);
+        const parsed = JSON.parse(jsonPart);
+        return `SMTP Setup Error: ${parsed.message || parsed.error || jsonPart}`;
+      }
+    } catch (e) {
+      // Ignored, fallback to raw message
+    }
+  }
+  return message;
+};
+
 export default function Auth() {
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
@@ -13,35 +29,38 @@ export default function Auth() {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
-
-  const handleGoogleLogin = async () => {
-    setLoading(true);
-    setErrorMsg('');
-    try {
-      if (supabase) {
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: window.location.origin + '/'
-          }
-        });
-        if (error) throw error;
-      } else {
-        simulateLocalLogin('Google User');
-      }
-    } catch (err: any) {
-      console.error(err);
-      simulateLocalLogin('Google User (Demo)');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [isForgotMode, setIsForgotMode] = useState(false);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg('');
     setSuccessMsg('');
+
+    if (isForgotMode) {
+      if (!email.trim()) {
+        setErrorMsg('Please enter your email address.');
+        setLoading(false);
+        return;
+      }
+      try {
+        if (supabase) {
+          const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: `${window.location.origin}/reset-password`,
+          });
+          if (error) throw error;
+          setSuccessMsg('✉️ Password reset link sent! Check your inbox.');
+        } else {
+          setSuccessMsg('✉️ Mock: Password reset link sent to ' + email);
+        }
+      } catch (err: any) {
+        console.error(err);
+        setErrorMsg(cleanErrorMessage(err.message || 'Failed to send reset link.'));
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
 
     if (!email.trim() || !password.trim()) {
       setErrorMsg('Please enter both email and password.');
@@ -67,17 +86,14 @@ export default function Auth() {
             }
           });
           if (error) throw error;
-          setSuccessMsg('✨ Sign up successful! Mock login activated.');
-          setTimeout(() => {
-            simulateLocalLogin(name || 'New Friend');
-          }, 1200);
+          setSuccessMsg('✨ Sign up successful! Check your email to confirm registration.');
         }
       } else {
         simulateLocalLogin(activeTab === 'signup' ? name : email.split('@')[0]);
       }
     } catch (err: any) {
       console.error(err);
-      simulateLocalLogin(activeTab === 'signup' ? name : email.split('@')[0]);
+      setErrorMsg(cleanErrorMessage(err.message || 'Authentication failed.'));
     } finally {
       setLoading(false);
     }
@@ -108,74 +124,67 @@ export default function Auth() {
               style={styles.authIllustration} 
             />
             <div style={styles.speechBubble}>
-              {isPasswordFocused ? "Shh... Your secret is fully safe with me! 🔒" : "Hey! Enter your secure keys below. ✨"}
+              {isForgotMode 
+                ? "Enter your registered email, and I'll send a recovery link! ✉️" 
+                : isPasswordFocused 
+                  ? "Shh... Your secret is fully safe with me! 🔒" 
+                  : "Hey! Enter your secure keys below. ✨"
+              }
             </div>
           </div>
 
           {/* Brand Header */}
           <div style={styles.brandHeader}>
-            <h2 style={styles.title}>Safe Space Entry</h2>
-            <p style={styles.subtitle}>Unlock your private dashboard & academic scheduler.</p>
+            <h2 style={styles.title}>{isForgotMode ? "Recover Password" : "Safe Space Entry"}</h2>
+            <p style={styles.subtitle}>
+              {isForgotMode 
+                ? "Get back into your secure safe space." 
+                : "Unlock your private dashboard & academic scheduler."
+              }
+            </p>
           </div>
 
           {/* Feedback Alerts */}
           {errorMsg && <div style={styles.errorDiv}>{errorMsg}</div>}
           {successMsg && <div style={styles.successDiv}>{successMsg}</div>}
 
-          {/* Tabs */}
-          <div style={styles.tabRow}>
-            <button
-              onClick={() => {
-                setActiveTab('login');
-                setErrorMsg('');
-                setSuccessMsg('');
-              }}
-              style={{
-                ...styles.tabBtn,
-                ...(activeTab === 'login' ? styles.tabBtnActive : {})
-              }}
-            >
-              Sign In
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab('signup');
-                setErrorMsg('');
-                setSuccessMsg('');
-              }}
-              style={{
-                ...styles.tabBtn,
-                ...(activeTab === 'signup' ? styles.tabBtnActive : {})
-              }}
-            >
-              Register
-            </button>
-          </div>
-
-          {/* OAuth Google */}
-          <button 
-            type="button" 
-            onClick={handleGoogleLogin} 
-            disabled={loading}
-            style={styles.googleBtn}
-            className="btn btn-outline"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" style={{ marginRight: '8px' }}>
-              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v3.92h6.69c-.29 1.5-.1.84-2.48 2.5v2.08h4.01c2.34-2.16 3.68-5.32 3.68-8.93Z"/>
-              <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.1A11.97 11.97 0 0 0 12 24Z"/>
-              <path fill="#FBBC05" d="M5.27 14.29a7.18 7.18 0 0 1 0-4.58V6.6H1.29a11.98 11.98 0 0 0 0 10.79l3.98-3.1Z"/>
-              <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.32 2.67 1.29 6.6l3.98 3.1c.95-2.85 3.6-4.95 6.73-4.95Z"/>
-            </svg>
-            Continue with Google
-          </button>
-
-          <div style={styles.divider}>
-            <span style={styles.dividerText}>or use email details</span>
-          </div>
+          {/* Tabs - Hidden in Forgot Password Mode */}
+          {!isForgotMode && (
+            <div style={styles.tabRow}>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('login');
+                  setErrorMsg('');
+                  setSuccessMsg('');
+                }}
+                style={{
+                  ...styles.tabBtn,
+                  ...(activeTab === 'login' ? styles.tabBtnActive : {})
+                }}
+              >
+                Sign In
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('signup');
+                  setErrorMsg('');
+                  setSuccessMsg('');
+                }}
+                style={{
+                  ...styles.tabBtn,
+                  ...(activeTab === 'signup' ? styles.tabBtnActive : {})
+                }}
+              >
+                Register
+              </button>
+            </div>
+          )}
 
           {/* Form */}
           <form onSubmit={handleEmailSubmit} style={styles.form}>
-            {activeTab === 'signup' && (
+            {!isForgotMode && activeTab === 'signup' && (
               <div style={styles.formGroup}>
                 <label>Secret Nickname</label>
                 <input 
@@ -203,26 +212,57 @@ export default function Auth() {
               </div>
             </div>
 
-            <div style={styles.formGroup}>
-              <label>Private Password</label>
-              <div style={styles.inputWrapper}>
-                <Lock size={16} color="#20BEE8" style={styles.inputIcon} />
-                <input 
-                  type="password" 
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onFocus={() => setIsPasswordFocused(true)}
-                  onBlur={() => setIsPasswordFocused(false)}
-                  placeholder="••••••••"
-                  style={styles.inputWithIcon}
-                  required
-                />
+            {!isForgotMode && (
+              <div style={styles.formGroup}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label>Private Password</label>
+                  {activeTab === 'login' && (
+                    <button 
+                      type="button" 
+                      onClick={() => { setIsForgotMode(true); setErrorMsg(''); setSuccessMsg(''); }}
+                      style={{ background: 'none', border: 'none', color: '#20BEE8', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', padding: 0, marginBottom: '0.2rem' }}
+                    >
+                      Forgot Password?
+                    </button>
+                  )}
+                </div>
+                <div style={styles.inputWrapper}>
+                  <Lock size={16} color="#20BEE8" style={styles.inputIcon} />
+                  <input 
+                    type="password" 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onFocus={() => setIsPasswordFocused(true)}
+                    onBlur={() => setIsPasswordFocused(false)}
+                    placeholder="••••••••"
+                    style={styles.inputWithIcon}
+                    required
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem' }}>
-              {loading ? 'Entering Safe Space...' : activeTab === 'login' ? 'Enter Safe Space' : 'Register Secure Account'}
+              {loading 
+                ? 'Processing...' 
+                : isForgotMode 
+                  ? 'Reset Password' 
+                  : activeTab === 'login' 
+                    ? 'Enter Safe Space' 
+                    : 'Register Secure Account'
+              }
             </button>
+
+            {isForgotMode && (
+              <button 
+                type="button" 
+                onClick={() => { setIsForgotMode(false); setErrorMsg(''); setSuccessMsg(''); }}
+                className="btn btn-outline"
+                style={{ width: '100%', marginTop: '0.5rem' }}
+              >
+                Back to Sign In
+              </button>
+            )}
           </form>
 
           {/* Privacy note */}

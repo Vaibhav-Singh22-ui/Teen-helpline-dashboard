@@ -9,7 +9,7 @@ import {
   LayoutDashboard, Users, Settings, Bell, Search, RotateCcw, Compass,
   SlidersHorizontal, Star, LogOut
 } from 'lucide-react';
-import { dbService } from '../lib/supabase';
+import { dbService, supabase } from '../lib/supabase';
 import { Profile, CounselorBooking, SafeJournal, Goal } from '../lib/types';
 
 // Mock Tutors and Counselors matching the requirements
@@ -19,66 +19,72 @@ const MOCK_TUTORS = [
     name: 'Vivek Gupta',
     expertise: 'IIT Mathematics & Physics Specialist',
     experience: '6 years',
-    photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200',
+    photo: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=200',
     subject: 'Math & Physics',
     mode: 'Tuition Class',
     price: 499, // price per session if booking individually
-    grades: ['Class 11th', 'Class 12th']
+    grades: ['Class 11th', 'Class 12th'],
+    illustration: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=400&q=80'
   },
   {
     id: 't2',
     name: 'Priyanka Sen',
     expertise: 'Computer Science & Python coding mentor',
     experience: '4 years',
-    photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200',
+    photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',
     subject: 'Coding & Comp Sci',
     mode: 'Tuition Class',
     price: 399,
-    grades: ['Class 8th', 'Class 9th', 'Class 10th']
+    grades: ['Class 8th', 'Class 9th', 'Class 10th'],
+    illustration: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=400&q=80'
   },
   {
     id: 't3',
     name: 'Dr. Anisha Rao',
     expertise: 'Career Guidance & College Stream Advisor',
     experience: '10 years',
-    photo: 'https://images.unsplash.com/photo-1594744803329-e58b31de215f?auto=format&fit=crop&q=80&w=200',
+    photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200',
     subject: 'Career Counselling',
     mode: 'Guidance Session',
     price: 599,
-    grades: ['Class 10th', 'Class 11th', 'Class 12th']
+    grades: ['Class 10th', 'Class 11th', 'Class 12th'],
+    illustration: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=400&q=80'
   },
   {
     id: 't4',
     name: 'Sanjana Roy',
     expertise: 'CBSE English Literature & Essay Writer',
     experience: '3 years',
-    photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+    photo: 'https://images.unsplash.com/photo-1593104547489-5cfb3839a3b5?auto=format&fit=crop&q=80&w=200',
     subject: 'English & Arts',
     mode: 'Tuition Class',
     price: 299,
-    grades: ['Class 11th', 'Class 12th']
+    grades: ['Class 11th', 'Class 12th'],
+    illustration: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=400&q=80'
   },
   {
     id: 't5',
     name: 'Amit Verma',
     expertise: 'Science, Biology & Chemistry Mentor',
     experience: '5 years',
-    photo: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=200',
+    photo: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=200',
     subject: 'Science & Chemistry',
     mode: 'Tuition Class',
     price: 349,
-    grades: ['Class 8th', 'Class 9th', 'Class 10th']
+    grades: ['Class 8th', 'Class 9th', 'Class 10th'],
+    illustration: 'https://images.unsplash.com/photo-1532187643603-ba119ca4109e?auto=format&fit=crop&w=400&q=80'
   },
   {
     id: 't6',
     name: 'Meera Nair',
     expertise: 'CBSE / ICSE Board Exam Preparation Coach',
     experience: '8 years',
-    photo: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=200',
+    photo: 'https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&q=80&w=200',
     subject: 'Board Physics & Math',
     mode: 'Tuition Class',
     price: 450,
-    grades: ['Class 10th', 'Class 12th']
+    grades: ['Class 10th', 'Class 12th'],
+    illustration: 'https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?auto=format&fit=crop&w=400&q=80'
   }
 ];
 
@@ -90,7 +96,7 @@ const WELLNESS_COURSES = [
     counselor: 'Dr. Anisha Rao',
     category: 'Anxiety Control',
     chapters: 4,
-    image: '/media__1782218276419.png',
+    image: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=400&q=80',
     description: 'Learn physiological breathing techniques, self-talk switches, and optimal study timing structures to completely defeat mock test anxiety.',
     grades: ['Class 10th', 'Class 12th', 'Class 11th', 'Class 9th', 'Class 8th'],
     syllabus: [
@@ -106,7 +112,7 @@ const WELLNESS_COURSES = [
     counselor: 'Rahul Sharma',
     category: 'Relationships',
     chapters: 3,
-    image: '/media__1782218276491.png',
+    image: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=400&q=80',
     description: 'A structural guide to building confidence, handling social groups, reporting digital bullying, and establishing personal boundary lines.',
     grades: ['Class 8th', 'Class 9th', 'Class 10th', 'Class 11th', 'Class 12th'],
     syllabus: [
@@ -121,7 +127,7 @@ const WELLNESS_COURSES = [
     counselor: 'Dr. Anisha Rao',
     category: 'Career Guidance',
     chapters: 3,
-    image: '/media__1782218276491.png',
+    image: 'https://images.unsplash.com/photo-1489533119213-66a5cd877091?auto=format&fit=crop&w=400&q=80',
     description: 'Feeling confused about selecting Science, Commerce, or Arts? Learn to map your personality markers directly to stream structures.',
     grades: ['Class 10th', 'Class 11th'],
     syllabus: [
@@ -182,6 +188,16 @@ const SUBSCRIPTION_PLANS = [
 
 export default function Dashboard() {
   const router = useRouter();
+
+  // Helper to dynamically resolve counselor photo from MOCK_TUTORS or other mock lists
+  const getCounselorPhoto = (counselorName: string) => {
+    const tutor = MOCK_TUTORS.find(t => t.name === counselorName);
+    if (tutor) return tutor.photo;
+    if (counselorName === 'Rahul Sharma') return 'https://images.unsplash.com/photo-1607990283143-e81e7a2c93ab?auto=format&fit=crop&q=80&w=200';
+    if (counselorName === 'Dr. Ananya Sen') return 'https://images.unsplash.com/photo-1589156280159-27698a70f29e?auto=format&fit=crop&q=80&w=200';
+    if (counselorName === 'Pooja Nair') return 'https://images.unsplash.com/photo-1582750433449-64935ef79b5f?auto=format&fit=crop&q=80&w=200';
+    return 'https://images.unsplash.com/photo-1596215143922-eedeaba0d917?auto=format&fit=crop&q=80&w=200'; // fallback
+  };
   
   // Dashboard Navigation Tab State (Left Sidebar tabs)
   const [activeTab, setActiveTab] = useState<'dashboard' | 'my-courses' | 'marketplace' | 'mentors' | 'cart' | 'settings'>('marketplace');
@@ -201,6 +217,7 @@ export default function Dashboard() {
   const [selectedGrade, setSelectedGrade] = useState<string>('All');
 
   // Interactive Database States
+  const [currentUserId, setCurrentUserId] = useState<string>('user123');
   const [profile, setProfile] = useState<Profile | null>(null);
   const [bookings, setBookings] = useState<CounselorBooking[]>([]);
   const [journals, setJournals] = useState<SafeJournal[]>([]);
@@ -229,14 +246,44 @@ export default function Dashboard() {
 
   // Load Dashboard Data
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem('th_logged_in') === 'true';
-    if (!isLoggedIn) {
-      router.push('/login');
-      return;
-    }
+    const checkAuth = async () => {
+      let activeUserId = 'user123';
 
-    dbService.initialize();
-    loadDashboardData();
+      if (supabase) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session && session.user) {
+            activeUserId = session.user.id;
+            setCurrentUserId(session.user.id);
+            localStorage.setItem('th_logged_in', 'true');
+          } else {
+            const isLoggedIn = localStorage.getItem('th_logged_in') === 'true';
+            if (!isLoggedIn) {
+              router.push('/login');
+              return;
+            }
+          }
+        } catch (err) {
+          console.error('Error fetching Supabase session:', err);
+          const isLoggedIn = localStorage.getItem('th_logged_in') === 'true';
+          if (!isLoggedIn) {
+            router.push('/login');
+            return;
+          }
+        }
+      } else {
+        const isLoggedIn = localStorage.getItem('th_logged_in') === 'true';
+        if (!isLoggedIn) {
+          router.push('/login');
+          return;
+        }
+      }
+
+      dbService.initialize();
+      loadDashboardData(activeUserId);
+    };
+
+    checkAuth();
 
     // Default booking date to tomorrow
     const tomorrow = new Date();
@@ -250,8 +297,7 @@ export default function Dashboard() {
     }
   }, []);
 
-  const loadDashboardData = async () => {
-    const userId = 'user123'; // Demo User ID
+  const loadDashboardData = async (userId: string = currentUserId) => {
     const prof = await dbService.getProfile(userId);
     const books = await dbService.getBookings(userId);
     const jrnls = await dbService.getJournalEntries(userId);
@@ -339,22 +385,29 @@ export default function Dashboard() {
     // Save scheduled sessions from cart
     for (const item of cart) {
       if (item.type === 'tuition' && item.bookingDetails) {
-        await dbService.addBooking(item.bookingDetails, 'user123');
+        await dbService.addBooking(item.bookingDetails, currentUserId);
       }
     }
 
     // Award check-out points
-    await dbService.addPoints(25, 'user123');
+    await dbService.addPoints(25, currentUserId);
     window.dispatchEvent(new Event('profileUpdated'));
     
     setCheckoutSuccess(true);
     clearCart();
-    loadDashboardData();
+    loadDashboardData(currentUserId);
   };
 
   // Sign out flow
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     localStorage.removeItem('th_logged_in');
+    if (supabase) {
+      try {
+        await supabase.auth.signOut();
+      } catch (err) {
+        console.error('Error signing out:', err);
+      }
+    }
     window.dispatchEvent(new Event('profileUpdated'));
     router.push('/login');
   };
@@ -379,10 +432,10 @@ export default function Dashboard() {
     }
 
     try {
-      await dbService.addJournalEntry(journalContent.trim(), journalMood, reflection, 'user123');
-      await dbService.addPoints(10, 'user123');
+      await dbService.addJournalEntry(journalContent.trim(), journalMood, reflection, currentUserId);
+      await dbService.addPoints(10, currentUserId);
       setJournalContent('');
-      await loadDashboardData();
+      await loadDashboardData(currentUserId);
       window.dispatchEvent(new Event('profileUpdated'));
     } catch (err) {
       console.error(err);
@@ -393,14 +446,14 @@ export default function Dashboard() {
 
   // Goals completion toggler
   const handleToggleGoal = async (goalId: string) => {
-    const nextGoals = await dbService.toggleGoal(goalId, 'user123');
+    const nextGoals = await dbService.toggleGoal(goalId, currentUserId);
     setGoals(nextGoals);
 
     const target = nextGoals.find(g => g.id === goalId);
     if (target?.completed) {
-      await dbService.addPoints(5, 'user123');
+      await dbService.addPoints(5, currentUserId);
       window.dispatchEvent(new Event('profileUpdated'));
-      loadDashboardData();
+      loadDashboardData(currentUserId);
     }
   };
 
@@ -408,9 +461,9 @@ export default function Dashboard() {
     e.preventDefault();
     if (!newGoalTitle.trim()) return;
 
-    await dbService.addCustomGoal(newGoalTitle.trim(), 'daily', 'user123');
+    await dbService.addCustomGoal(newGoalTitle.trim(), 'daily', currentUserId);
     setNewGoalTitle('');
-    loadDashboardData();
+    loadDashboardData(currentUserId);
   };
 
   // Course syllabus reading chapter navigator
@@ -419,9 +472,9 @@ export default function Dashboard() {
     if (activeChapterIndex < activeCourse.syllabus.length - 1) {
       setActiveChapterIndex(prev => prev + 1);
     } else {
-      await dbService.addPoints(20, 'user123');
+      await dbService.addPoints(20, currentUserId);
       window.dispatchEvent(new Event('profileUpdated'));
-      loadDashboardData();
+      loadDashboardData(currentUserId);
       setCourseCompletedMsg('🎉 Lesson completed successfully! You earned +20 wellness points.');
       setTimeout(() => {
         setCourseCompletedMsg('');
@@ -652,18 +705,23 @@ export default function Dashboard() {
       <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: 0 }}>
         
         {/* Top Header Accessories bar */}
-        <header className="dash-desktop-header" style={styles.topHeader}>
+        <header className="dash-desktop-header" style={{
+          ...styles.topHeader,
+          justifyContent: activeTab === 'settings' ? 'flex-end' : 'space-between'
+        }}>
           {/* Search Input */}
-          <div style={styles.searchBarWrapper}>
-            <Search size={18} color="var(--text-light)" />
-            <input 
-              type="text" 
-              placeholder="Search for courses, mentors, or skills..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={styles.searchBarInput}
-            />
-          </div>
+          {activeTab !== 'settings' && (
+            <div style={styles.searchBarWrapper}>
+              <Search size={18} color="var(--text-light)" />
+              <input 
+                type="text" 
+                placeholder="Search for courses, mentors, or skills..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={styles.searchBarInput}
+              />
+            </div>
+          )}
 
           {/* Right side notification and checkout bag deck */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem' }}>
@@ -672,14 +730,16 @@ export default function Dashboard() {
               <span style={styles.notificationBadge} />
             </div>
             
-            <button 
-              onClick={() => { setActiveTab('cart'); setCheckoutSuccess(false); }}
-              style={styles.headerCartButton}
-            >
-              <ShoppingCart size={18} />
-              <span>Cart</span>
-              <span style={styles.headerCartBadge}>{cart.length}</span>
-            </button>
+            {activeTab !== 'settings' && activeTab !== 'cart' && (
+              <button 
+                onClick={() => { setActiveTab('cart'); setCheckoutSuccess(false); }}
+                style={styles.headerCartButton}
+              >
+                <ShoppingCart size={18} />
+                <span>Cart</span>
+                <span style={styles.headerCartBadge}>{cart.length}</span>
+              </button>
+            )}
           </div>
         </header>
 
@@ -715,7 +775,7 @@ export default function Dashboard() {
                       return (
                         <div key={book.id} style={styles.sessionCard}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                            <img src={book.counselor_photo} alt={book.counselor_name} style={styles.sessionAvatar} />
+                            <img src={getCounselorPhoto(book.counselor_name) || book.counselor_photo} alt={book.counselor_name} style={styles.sessionAvatar} />
                             <div>
                               <strong style={{ fontSize: '1rem', color: 'var(--text-dark)', display: 'block' }}>{book.counselor_name}</strong>
                               <span style={{ fontSize: '0.8rem', color: 'var(--primary-teal)', fontWeight: 600 }}>{book.counselor_expertise}</span>
@@ -935,9 +995,9 @@ export default function Dashboard() {
                       <div key={tutor.id} className="card card-hover" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#ffffff' }}>
                         <div style={{ height: '150px', backgroundColor: '#FAF9F6', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', borderBottom: '1px solid var(--border-soft)', padding: '1rem' }}>
                           <img 
-                            src="/media__1782218276491.png" 
+                            src={tutor.illustration || "/media__1782218276491.png"} 
                             alt="Teacher Illustration" 
-                            style={{ height: '100%', objectFit: 'contain' }}
+                            style={{ height: '100%', width: '100%', objectFit: 'cover' }}
                           />
                           <span style={{ position: 'absolute', top: '12px', left: '12px', backgroundColor: '#20BEE8', color: '#323244', fontSize: '0.7rem', fontWeight: 800, padding: '0.25rem 0.6rem', borderRadius: '6px' }}>Teacher</span>
                         </div>
@@ -996,7 +1056,7 @@ export default function Dashboard() {
                           <img 
                             src={course.image} 
                             alt="Course Illustration" 
-                            style={{ height: '100%', objectFit: 'contain' }}
+                            style={{ height: '100%', width: '100%', objectFit: 'cover' }}
                           />
                           <span style={{ position: 'absolute', top: '12px', left: '12px', backgroundColor: '#FFC0C1', color: '#323244', fontSize: '0.7rem', fontWeight: 800, padding: '0.25rem 0.6rem', borderRadius: '6px' }}>Counselor</span>
                         </div>
@@ -1006,7 +1066,7 @@ export default function Dashboard() {
                           <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-dark)', marginTop: '0.2rem', marginBottom: '0.6rem' }}>{course.title}</h3>
                           
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.8rem' }}>
-                            <img src="https://images.unsplash.com/photo-1594744803329-e58b31de215f?auto=format&fit=crop&q=80&w=200" alt={course.counselor} style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border-soft)' }} />
+                            <img src={getCounselorPhoto(course.counselor)} alt={course.counselor} style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border-soft)' }} />
                             <div>
                               <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-dark)', display: 'block' }}>{course.counselor}</span>
                               <span style={{ fontSize: '0.72rem', color: 'var(--text-light)', display: 'block' }}>Expert stream advisor</span>
@@ -1707,7 +1767,7 @@ const styles: Record<string, React.CSSProperties> = {
   courseCoverImg: {
     width: '100%',
     height: '100%',
-    objectFit: 'contain'
+    objectFit: 'cover'
   },
   courseImageWrapper: {
     position: 'relative',
@@ -1716,7 +1776,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '0.5rem'
+    padding: 0
   },
   courseCategoryTag: {
     position: 'absolute',
